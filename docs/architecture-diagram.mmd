@@ -1,69 +1,57 @@
 flowchart TB
   subgraph APP["Application VPC — 10.0.0.0/16"]
-    IGW[Internet Gateway]
-    PUBRT[Public route table]
-    PUB[Public subnet — 10.0.1.0/24 — AZ a]
-    PRIVRT[Private route table]
-    APPA[Private subnet A — 10.0.2.0/24 — AZ a]
-    APPB[Private subnet B — 10.0.3.0/24 — AZ b]
-    BSG[Bastion security group — no SSH ingress by default]
-    ASG[Application security group]
-    PSG[RDS Proxy security group]
-    DSG[Database security group]
-    CSG[Cache security group]
-    XSG[DAX security group]
-    S3A[S3 gateway endpoint]
-    DDA[DynamoDB gateway endpoint]
+    IGW["Internet Gateway"]
+    PUBRT["Public route table"]
+    PUB["Public subnet — 10.0.1.0/24 — AZ a"]
+    APPRT["Private route table"]
+    PRIVAA["Private subnet A — 10.0.2.0/24 — AZ a"]
+    PRIVAB["Private subnet B — 10.0.3.0/24 — AZ b"]
+    APPEC["Planned application compute"]
+    PROXY["Planned RDS Proxy"]
+    DB["Planned RDS/Aurora"]
+    CACHE["Planned ElastiCache"]
+    DAX["Planned DAX"]
     IGW --> PUBRT --> PUB
-    PRIVRT --> APPA
-    PRIVRT --> APPB
-    PRIVRT --> S3A
-    PRIVRT --> DDA
-    BSG -."SSH only from admin_cidr when explicitly set".-> ASG
-    ASG -->|Database port| PSG
-    PSG -->|Database port| DSG
-    ASG -->|6379| CSG
-    ASG -->|8111 / 9111| XSG
+    APPRT --> PRIVAA
+    APPRT --> PRIVAB
+    PRIVAA --> APPEC
+    APPEC --> PROXY --> DB
+    PRIVAA --> CACHE
+    PRIVAA --> DAX
   end
 
-  subgraph ANA["Analytics VPC — 10.1.0.0/16"]
-    ANRT[Private route table]
-    ANA1[Private subnet A — 10.1.1.0/24 — AZ a]
-    ANA2[Private subnet B — 10.1.2.0/24 — AZ b]
-    WSG[Analytics worker security group — no inbound by default]
-    S3N[S3 gateway endpoint]
-    ANRT --> ANA1
-    ANRT --> ANA2
-    ANRT --> S3N
+  subgraph ANALYTICS["Analytics VPC — 10.1.0.0/16"]
+    ANRT["Private route table"]
+    ANAA["Private subnet A — 10.1.1.0/24 — AZ a"]
+    ANAB["Private subnet B — 10.1.2.0/24 — AZ b"]
+    WORKER["Planned analytics worker"]
+    ANRT --> ANAA
+    ANRT --> ANAB
+    ANAA --> WORKER
   end
 
-  PEER[VPC peering]
-  PRIVRT <-->|Explicit private CIDR routes| PEER
-  PEER <-->|Explicit private CIDR routes| ANRT
+  PEER["VPC peering connection"]
+  APPRT -. "Route to 10.1.0.0/16" .-> PEER
+  PEER -. "Route to 10.0.0.0/16" .-> ANRT
 
-  subgraph SERVICES["Planned service modules — not deployed"]
-    RDS[RDS / Aurora]
-    RP[RDS Proxy]
-    CACHE[ElastiCache]
-    DAX[DynamoDB DAX]
-    DDB[DynamoDB]
-    S3[S3 Parquet]
-    GLUE[Glue Catalog]
-    ATHENA[Athena]
-    REDSHIFT[Redshift]
-    KDS[Kinesis Data Streams]
-    FH[Firehose]
-    DMS[AWS DMS]
+  subgraph SERVICES["Planned managed AWS services — connectivity to be designed"]
+    DDB["Optional DynamoDB orders table - disabled by default"]
+    STREAM["Kinesis Data Streams"]
+    FIREHOSE["Amazon Data Firehose"]
+    S3["S3 — Parquet data"]
+    GLUE["Glue Data Catalog"]
+    ATHENA["Athena"]
+    REDSHIFT["Redshift"]
+    DMS["AWS DMS"]
   end
 
-  DSG -.future attachment.-> RDS
-  PSG -.future attachment.-> RP
-  CSG -.future attachment.-> CACHE
-  XSG -.future attachment.-> DAX
-  DDA -.IAM-governed service access.-> DDB
-  S3A -.IAM-governed service access.-> S3
-  S3N -.IAM-governed service access.-> S3
-  KDS --> FH --> S3
+  STREAM --> FIREHOSE --> S3
   S3 --> GLUE --> ATHENA
   S3 --> REDSHIFT
-  RDS -.planned migration exercise.-> DMS
+  DB -. "Potential migration source" .-> DMS
+  DMS -. "Target design to validate" .-> REDSHIFT
+  DAX -. "Uses DynamoDB" .-> DDB
+  WORKER -. "Approved service access" .-> S3
+
+  classDef planned stroke-dasharray: 5 5
+  class APPEC,PROXY,DB,CACHE,DAX,WORKER,DDB,STREAM,FIREHOSE,S3,GLUE,ATHENA,REDSHIFT,DMS planned

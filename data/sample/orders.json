@@ -1,0 +1,26 @@
+[
+  {
+    "customer_id": "CUSTOMER#1001",
+    "order_id": "ORDER#2026-0001",
+    "status": "PAID",
+    "created_at": "2026-10-24T09:30:00Z",
+    "order_total": 39.95,
+    "currency": "INR"
+  },
+  {
+    "customer_id": "CUSTOMER#1001",
+    "order_id": "ORDER#2026-0002",
+    "status": "PENDING",
+    "created_at": "2026-10-24T10:15:00Z",
+    "order_total": 125.00,
+    "currency": "INR"
+  },
+  {
+    "customer_id": "CUSTOMER#1002",
+    "order_id": "ORDER#2026-0003",
+    "status": "PAID",
+    "created_at": "2026-10-24T11:05:00Z",
+    "order_total": 79.50,
+    "currency": "INR"
+  }
+]
