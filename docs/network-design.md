@@ -1,28 +1,47 @@
-# Network design — proposal for review
+# Network design — hardened target
 
-The original drawing's `28.0.0.0/16` and `28.200.0.0/16` values are illustrative only. They are not RFC1918 private ranges and must not be copied into the deployment.
+## Private address plan
 
-## Proposed private address plan
+| Component | CIDR | Availability Zone | Purpose |
+|---|---|---|---|
+| Application VPC | `10.0.0.0/16` | Regional | Application and database network |
+| Application public subnet | `10.0.1.0/24` | `ap-south-1a` | Future controlled administration entry point |
+| Application private subnet A | `10.0.2.0/24` | `ap-south-1a` | Application and private data tier |
+| Application private subnet B | `10.0.3.0/24` | `ap-south-1b` | Multi-AZ placement option |
+| Analytics VPC | `10.1.0.0/16` | Regional | Analytics network |
+| Analytics private subnet A | `10.1.1.0/24` | `ap-south-1a` | Optional analytics worker |
+| Analytics private subnet B | `10.1.2.0/24` | `ap-south-1b` | Multi-AZ placement option |
 
-| Component | Proposed CIDR | Purpose |
-|---|---|---|
-| VPC 1 — application | `10.0.0.0/16` | Application and relational database tier |
-| VPC 1 — public subnet | `10.0.1.0/24` | Controlled admin/bastion entry point |
-| VPC 1 — private subnet | `10.0.2.0/24` | Application EC2 and private database tier |
-| VPC 2 — analytics | `10.1.0.0/16` | Analytics and data processing |
-| VPC 2 — private subnet | `10.1.1.0/24` | Optional analytics worker |
-
-These are proposed defaults, not deployed resources. Confirm they do not overlap with existing networks/VPNs before use.
+The CIDRs passed the project's local overlap/containment check. They still must
+be compared against any VPN, home, and corporate network ranges before deployment.
 
 ## Route intent
-- VPC 1 public subnet: local route plus Internet Gateway default route only if required.
-- VPC 1 private subnet: local route and VPC 2 CIDR route via peering for explicitly required private communication.
-- VPC 2 private subnet: local route and VPC 1 CIDR route via peering for explicitly required private communication.
-- Do not add `0.0.0.0/0` routes to private subnets until the egress design and cost are reviewed.
 
-## Security intent
-- No database public access.
-- SSH only from a known admin IP or via a safer managed access pattern; never `0.0.0.0/0`.
-- App-to-database access only on the selected database port.
-- Use least-privilege IAM roles and service-specific endpoints where appropriate.
-- Enable logs only after checking their cost and retention.
+- The public route table has a route to the application VPC's Internet Gateway.
+- The public subnet does not auto-assign public IPv4 addresses.
+- Application private route table: local VPC route, route to the analytics CIDR
+  through VPC peering, and S3/DynamoDB gateway endpoint routes managed by AWS.
+- Analytics private route table: local VPC route, route to the application CIDR
+  through VPC peering, and an S3 gateway endpoint route managed by AWS.
+- No private subnet has a `0.0.0.0/0` route. No NAT Gateway is defined.
+
+## Security-group intent
+
+- Bastion SSH ingress is absent by default; an explicit trusted administrator
+  CIDR is required before that ingress rule exists.
+- Application administrative SSH accepts traffic only from the bastion group.
+- RDS Proxy accepts the configured database port only from the application SG.
+- The database SG accepts that port only from the proxy SG.
+- Cache and DAX client ports accept traffic only from the application SG.
+- Application/worker egress is scoped to the declared tier dependencies and
+  S3/DynamoDB gateway-endpoint prefix lists.
+- There is no general cross-VPC application ingress rule. Add one only after
+  a specific service flow and port have been justified.
+
+## Managed-service connectivity caveats
+
+Gateway endpoints support S3 and DynamoDB only. Glue, Athena, Kinesis, Firehose,
+AWS APIs, Systems Manager, and other services have separate connectivity models.
+Where a private workload needs interface endpoints, their hourly/data charges
+must be reviewed before creating them. VPC peering is non-transitive and does
+not automatically grant access to managed services.

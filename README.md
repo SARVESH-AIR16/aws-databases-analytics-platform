@@ -1,69 +1,66 @@
 # AWS Databases and Analytics Platform
 
-An AWS portfolio project for designing and implementing an integrated database and analytics platform with Terraform, segmented networking, data services, validation, security controls, and cost-conscious operations.
+A Terraform-managed AWS portfolio project covering network segmentation,
+relational and NoSQL databases, caching, analytics, streaming, migration,
+security controls, local validation and cost-conscious operations.
 
-## Current verified status
+## Repository status
+
+The public repository has been created and the initial commit is published on
+[`main`](https://github.com/SARVESH-AIR16/aws-databases-analytics-platform).
+Follow-up network-hardening changes are in progress locally and must be committed
+and pushed after validation.
+
+## Current implementation status
 
 | Area | Status |
 |---|---|
-| Two-VPC, five-subnet network configuration | Terraform validation passed locally |
+| Two-VPC/five-subnet foundation | Earlier Terraform validation passed locally |
 | CIDR validation | Passed locally |
-| Most recent Terraform plan | 19 additions, 0 changes, 0 deletions |
+| Baseline network plan | 19 additions, 0 changes, 0 deletions; not applied |
+| Security groups and gateway endpoints | Proposed update; new local validation/plan still required |
 | AWS network deployment | Not deployed |
-| Database and analytics modules | Not yet implemented and tested end to end |
-| Local Git repository | Initialized on `main`; no remote configured yet |
+| Database and analytics modules | Not yet deployed or tested end-to-end |
 
-A valid Terraform plan is not evidence that resources have been deployed or that an end-to-end workflow works. Status must be updated only after implementation and testing.
+A successful Terraform validate or plan is not evidence that resources were
+created or an application works end-to-end. Update status only after testing.
 
-## Target architecture
+## Locked address plan
 
-The target design contains two non-overlapping VPCs connected through VPC peering. The application VPC is intended to contain application and database components. The analytics VPC is intended to host private analytics workloads. Managed AWS services require service-specific connectivity and permissions; VPC peering alone does not provide universal access to them.
+### Application VPC — `10.0.0.0/16`
 
-See [architecture overview](docs/architecture.md), [network design](docs/network-design.md), and [architecture diagram source](docs/architecture-diagram.mmd).
+- Public subnet `10.0.1.0/24`, `ap-south-1a`
+- Private subnet A `10.0.2.0/24`, `ap-south-1a`
+- Private subnet B `10.0.3.0/24`, `ap-south-1b`
 
-## Locked network address plan
+### Analytics VPC — `10.1.0.0/16`
 
-### Application VPC
+- Private subnet A `10.1.1.0/24`, `ap-south-1a`
+- Private subnet B `10.1.2.0/24`, `ap-south-1b`
 
-- VPC: `10.0.0.0/16`
-- Public subnet: `10.0.1.0/24` in `ap-south-1a`
-- Private subnet A: `10.0.2.0/24` in `ap-south-1a`
-- Private subnet B: `10.0.3.0/24` in `ap-south-1b`
-
-### Analytics VPC
-
-- VPC: `10.1.0.0/16`
-- Private subnet A: `10.1.1.0/24` in `ap-south-1a`
-- Private subnet B: `10.1.2.0/24` in `ap-south-1b`
-
-The network Terraform configuration currently describes VPCs, subnets, an Internet Gateway, route tables, associations, VPC peering, and private routes. Security groups, service connectivity, and deployment readiness require additional review. The configured subnets do not automatically assign public IPv4 addresses. No NAT Gateway is included by default.
+The target design includes VPC peering, tier-specific security groups, an S3
+Gateway endpoint in each VPC and a DynamoDB gateway endpoint in the application
+VPC. No NAT Gateway is included by default; no subnet automatically assigns
+public IPv4 addresses. See [the architecture overview](docs/architecture.md),
+[network design](docs/network-design.md), and
+[diagram source](docs/architecture-diagram.mmd).
 
 ## Eight project modules
 
-| Module | Scope | Status |
-|---|---|---|
-| 1. Relational databases | RDS/Aurora and schema | Planned |
-| 2. Availability and reads | Multi-AZ and read replicas | Planned |
-| 3. Database connections | RDS Proxy, backups and recovery | Planned |
-| 4. DynamoDB | NoSQL data model and operations | Planned |
-| 5. Caching | ElastiCache and DAX | Planned |
-| 6. Analytics foundations | S3 Parquet, Glue, Athena and Redshift | Planned |
-| 7. Streaming and ingestion | Kinesis and Firehose | Planned |
-| 8. Database migration | AWS DMS and migration validation | Planned |
+1. Relational databases — RDS/Aurora and schema.
+2. Availability and reads — Multi-AZ and read replicas.
+3. Database connections — RDS Proxy, backups and recovery.
+4. DynamoDB — NoSQL data model and operations.
+5. Caching — ElastiCache and DAX.
+6. Analytics foundations — S3 Parquet, Glue, Athena and Redshift.
+7. Streaming and ingestion — Kinesis and Firehose.
+8. Database migration — AWS DMS and migration validation.
 
-## Technology
-
-- Amazon Web Services
-- Terraform
-- AWS CLI
-- Python for CIDR validation and local tests
-- Git
+These modules remain planned until their infrastructure, tests and evidence exist.
 
 ## Local validation
 
-Prerequisites: Terraform, AWS CLI, Python 3, and Git.
-
-From the repository root:
+Prerequisites: Terraform, AWS CLI, Python 3 and Git.
 
 ```bash
 terraform -chdir=infrastructure fmt -check -recursive
@@ -71,26 +68,31 @@ terraform -chdir=infrastructure validate
 python3 scripts/validate-cidrs.py
 ```
 
-To create a fresh AWS plan after verifying credentials and permissions:
+To generate a fresh plan after validating the AWS identity and permissions:
 
 ```bash
-AWS_PROFILE=ghost-hunter-cli \
-AWS_REGION=ap-south-1 \
-terraform -chdir=infrastructure plan
+AWS_PROFILE=ghost-hunter-cli AWS_REGION=ap-south-1 \
+  terraform -chdir=infrastructure plan
 ```
 
-Planning does not deploy resources. Review the planned actions before any apply operation. Do not commit Terraform state, plan files, credentials, or secret-bearing variable files.
+Planning is not deployment. Inspect all resource actions before any apply.
 
-## Security and cost approach
+## Security and cost
 
-- Use an appropriately permissioned non-root AWS identity.
-- Review IAM permissions, security groups, and managed-service connectivity before deployment.
-- Do not assume VPC peering is transitive.
-- Review current regional pricing before each deployment stage.
-- Remember that budgets and alerts are not hard spending caps.
-- Database, cache, migration, streaming, and analytics services can incur charges.
-- Use synthetic data, short test windows where sensible, and verify resource cleanup.
+- Use an appropriately permissioned non-root identity; prefer temporary credentials
+  when practical. Never commit keys, state, saved plans or secret-bearing tfvars.
+- The bastion SSH ingress is disabled unless a trusted `admin_cidr` is explicitly set.
+  Never set it to `0.0.0.0/0`.
+- Gateway endpoints provide a network path, not IAM authorization.
+- AWS states S3/DynamoDB gateway endpoints have no additional endpoint charge;
+  normal service usage costs remain. Check regional service pricing before deployment.
+- RDS/Aurora, proxy, cache, DAX, Redshift, DMS, Kinesis/Firehose, EC2, public IPv4,
+  interface endpoints and data transfer can incur charges.
+- Budget alerts are not hard spending caps. Define cleanup before each test and verify it.
 
 ## Portfolio evidence
 
-The finished repository should include an architecture diagram reflecting actual status, reproducible infrastructure and test instructions, service-specific documentation, synthetic datasets, genuine test results, cost and cleanup documentation, and authentic screenshots or demo evidence. Claims about deployed functionality must match what was actually deployed and tested.
+The completed project will include reproducible configuration and tests, synthetic
+sample data, architecture evidence, module documentation, cost/security/cleanup
+instructions, and genuine screenshots or demo results. Claims must match what was
+actually deployed and tested.
