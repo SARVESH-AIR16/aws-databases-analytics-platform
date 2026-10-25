@@ -1,0 +1,57 @@
+flowchart TB
+  subgraph APP["Application VPC — 10.0.0.0/16"]
+    IGW["Internet Gateway"]
+    PUBRT["Public route table"]
+    PUB["Public subnet — 10.0.1.0/24 — AZ a"]
+    APPRT["Private route table"]
+    PRIVAA["Private subnet A — 10.0.2.0/24 — AZ a"]
+    PRIVAB["Private subnet B — 10.0.3.0/24 — AZ b"]
+    APPEC["Planned application compute"]
+    PROXY["Planned RDS Proxy"]
+    DB["Planned RDS/Aurora"]
+    CACHE["Planned ElastiCache"]
+    DAX["Planned DAX"]
+    IGW --> PUBRT --> PUB
+    APPRT --> PRIVAA
+    APPRT --> PRIVAB
+    PRIVAA --> APPEC
+    APPEC --> PROXY --> DB
+    PRIVAA --> CACHE
+    PRIVAA --> DAX
+  end
+
+  subgraph ANALYTICS["Analytics VPC — 10.1.0.0/16"]
+    ANRT["Private route table"]
+    ANAA["Private subnet A — 10.1.1.0/24 — AZ a"]
+    ANAB["Private subnet B — 10.1.2.0/24 — AZ b"]
+    WORKER["Planned analytics worker"]
+    ANRT --> ANAA
+    ANRT --> ANAB
+    ANAA --> WORKER
+  end
+
+  PEER["VPC peering connection"]
+  APPRT -. "Route to 10.1.0.0/16" .-> PEER
+  PEER -. "Route to 10.0.0.0/16" .-> ANRT
+
+  subgraph SERVICES["Planned managed AWS services — connectivity to be designed"]
+    DDB["DynamoDB"]
+    STREAM["Kinesis Data Streams"]
+    FIREHOSE["Amazon Data Firehose"]
+    S3["S3 — Parquet data"]
+    GLUE["Glue Data Catalog"]
+    ATHENA["Athena"]
+    REDSHIFT["Redshift"]
+    DMS["AWS DMS"]
+  end
+
+  STREAM --> FIREHOSE --> S3
+  S3 --> GLUE --> ATHENA
+  S3 --> REDSHIFT
+  DB -. "Potential migration source" .-> DMS
+  DMS -. "Target design to validate" .-> REDSHIFT
+  DAX -. "Uses DynamoDB" .-> DDB
+  WORKER -. "Approved service access" .-> S3
+
+  classDef planned stroke-dasharray: 5 5
+  class APPEC,PROXY,DB,CACHE,DAX,WORKER,DDB,STREAM,FIREHOSE,S3,GLUE,ATHENA,REDSHIFT,DMS planned
