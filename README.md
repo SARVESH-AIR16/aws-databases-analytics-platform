@@ -19,7 +19,7 @@ security controls, automated validation and cost-conscious operations.
 | Caching | Optional ElastiCache/Valkey and DAX configuration and local guardrails added; disabled and not deployed |
 | Analytics foundations | Optional S3, Glue, Athena and Redshift configuration and local checks added; disabled and not deployed |
 | Streaming and ingestion | Optional Kinesis and Firehose configuration and local checks added; disabled and not deployed |
-| Database migration | Planned; implementation and evidence remain |
+| Database migration | Optional DMS full-load to S3 Parquet with scoped IAM and local checks; disabled and not deployed |
 
 A valid Terraform configuration or plan does not prove resources were created or
 that services work end-to-end. Keep status aligned with the latest repeatable tests.
@@ -51,11 +51,11 @@ public IPv4 addresses. See [architecture overview](docs/architecture.md),
 5. **Caching** — ElastiCache for Valkey and DynamoDB Accelerator (DAX).
 6. **Analytics foundations** — S3 Parquet data lake, Glue Data Catalog, Athena and optional Redshift.
 7. **Streaming and ingestion** — Kinesis Data Streams and Firehose delivery to the analytics S3 lake.
-8. **Database migration** — AWS DMS and migration validation.
+8. **Database migration** — AWS DMS full-load from private PostgreSQL to an S3 Parquet target, with migration validation.
 
-Modules 1–7 now contain optional configuration and/or local validation assets. All
-AWS service stacks remain disabled by default and have not been deployed. Module 8
-still requires implementation, validation and evidence.
+All eight modules now have optional configuration and/or local validation assets. All
+AWS service stacks remain disabled by default and have not been deployed. The local
+DMS demo does not prove an AWS migration occurred.
 
 ## Local validation
 
@@ -70,11 +70,14 @@ python3 tests/validate-dynamodb-config.py
 python3 tests/validate-cache-config.py
 python3 tests/validate-analytics-config.py
 python3 tests/validate-streaming-config.py
+python3 tests/validate-dms-config.py
 python3 scripts/dynamodb_demo.py validate-sample
 python3 scripts/cache_demo.py validate-sample
 python3 scripts/analytics_demo.py validate-sample
 python3 scripts/streaming_demo.py validate-sample
 python3 scripts/streaming_demo.py simulate
+python3 scripts/dms_demo.py validate-sample
+python3 scripts/dms_demo.py simulate
 ```
 
 To generate an AWS plan after reviewing current pricing and confirming the intended
@@ -86,7 +89,7 @@ AWS_PROFILE=ghost-hunter-cli AWS_REGION=ap-south-1 \
 ```
 
 Local validators do not call AWS. Review a fresh plan before any deployment; none
-of the optional analytics, database, cache, streaming or Redshift stacks are enabled by default.
+of the optional analytics, database, cache, streaming, DMS or Redshift stacks are enabled by default.
 
 ## Security and cost
 

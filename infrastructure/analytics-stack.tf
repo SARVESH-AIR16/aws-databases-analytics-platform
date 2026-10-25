@@ -97,6 +97,17 @@ resource "aws_s3_bucket_lifecycle_configuration" "analytics_lake" {
   }
 
   rule {
+    id     = "expire-dms-migration-data"
+    status = "Enabled"
+    filter {
+      prefix = "data/dms-migration/"
+    }
+    expiration {
+      days = 7
+    }
+  }
+
+  rule {
     id     = "expire-noncurrent-versions"
     status = "Enabled"
     filter {}

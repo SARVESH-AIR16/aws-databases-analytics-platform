@@ -95,27 +95,30 @@ not prove AWS ingestion or delivery.
 
 ## Module 8 — Database migration
 
-Implement an AWS DMS migration test and validate migrated records and cleanup.
+The optional migration module adds:
 
-## Cross-cutting gates
+- A private AWS DMS replication instance inside the two application private subnets.
+- A PostgreSQL source endpoint using SSL and the existing optional RDS database.
+- An S3 target endpoint that writes Parquet objects under `data/dms-migration/` in the analytics lake.
+- Least-privilege S3 target access, separate bucket-location permission, narrow network rules, and lifecycle expiry for migration output.
+- A full-load mapping limited to `public.orders`, a synthetic SQL schema/data fixture, and offline validators.
 
-1. Use appropriately permissioned IAM identities and protect secrets.
-2. Format and validate Terraform and run static/functional tests.
-3. Generate a fresh plan under the intended project identity.
-4. Review current regional pricing and possible ongoing charges.
-5. Require explicit approval before AWS deployment.
-6. Test actual deployed behaviour before claiming success.
-7. Clean up temporary resources and verify the cleanup.
-8. Keep status labels accurate.
+DMS and task start are both disabled by default. Enabling the migration requires the
+RDS and analytics stacks, a protected manually managed RDS password, and checking
+whether the exact AWS DMS service-role names already exist. The DMS endpoint provider
+stores the password in raw Terraform state; protect it. DMS replication-instance
+hours incur charges. Check current `ap-south-1` pricing and resource availability,
+review the full plan, test endpoint connectivity, and obtain explicit approval before
+any temporary deployment. The offline demo does not prove a live migration.
 
 ## Verified status at this stage
 
 - The two-VPC/five-subnet CIDR plan and network-hardening Terraform configuration
   passed local validation; no network resources have been applied.
-- Relational, DynamoDB, caching, and analytics configurations are optional and
-  disabled by default; reported local validation/static checks passed.
-- Module 7 streaming configuration and local checks have been added on this
-  checkout; run the validation commands before staging or committing it.
+- Relational, DynamoDB, caching, analytics, and streaming configurations are optional
+  and disabled by default; reported local validation/static checks passed.
+- Module 8 DMS configuration, scoped IAM, synthetic SQL, and local tests have been
+  added on this checkout; run the validation commands before staging/committing.
 - No AWS resources have been deployed by this project based on the reported runs.
 
 ## Portfolio deliverables
