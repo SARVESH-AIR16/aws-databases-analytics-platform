@@ -57,7 +57,20 @@ Optional Valkey and DAX Terraform configuration, encryption and local static/off
 
 ## Module 6 — Analytics foundations
 
-Implement S3 Parquet, Glue Data Catalog, Athena queries and Redshift integration.
+The optional analytics module adds:
+
+- A private S3 Parquet data lake with SSE-S3, public-access blocks, HTTPS-only
+  policy, bucket-owner-enforced ownership, versioning and lifecycle cleanup.
+- A Glue Data Catalog database and an optional, unscheduled Parquet crawler.
+- An Athena workgroup with enforced encrypted result output and a 50 MiB per-query
+  scanned-data cutoff by default.
+- An optional private, encrypted, single-node provisioned Redshift cluster for
+  Spectrum integration, using a managed admin password and read-only S3/Glue IAM.
+
+All analytics, crawler and Redshift switches default to false. Local tests and
+Parquet/SQL examples can be validated without AWS. The Redshift demo is billable
+while running, and the module's S3 bucket is configured to empty on Terraform
+destroy; review the stage guide before an approved deployment.
 
 ## Module 7 — Streaming and ingestion
 
@@ -80,14 +93,12 @@ Implement an AWS DMS migration test and validate migrated records and cleanup.
 
 ## Verified status at this stage
 
-- The two-VPC/five-subnet configuration and CIDR validator passed locally.
-- The pre-Module-5 network-hardening plan proposed 45 additions, zero changes and
-  zero deletions; not applied. Module 5 removes two plaintext DAX security-group rules,
-  so regenerate a fresh plan before any deployment.
-- Relational configuration guardrails passed; RDS/Aurora/Proxy are disabled and
-  no database services were in the plan.
-- DynamoDB optional configuration and offline checks passed before the last commit; stack disabled by default.
-- Caching optional configuration has been added locally by the Module 5 installer; validate and test before committing.
+- The two-VPC/five-subnet CIDR plan and network-hardening Terraform configuration
+  passed local validation; no network resources have been applied.
+- Relational, DynamoDB and caching configurations are optional and disabled by
+  default. Their reported local static guardrails and sample checks have passed.
+- Module 6 analytics configuration and checks have been added locally; validation
+  on this checkout is pending. All analytics resources remain disabled by default.
 - No AWS resources have been deployed by this project based on the reported runs.
 
 ## Portfolio deliverables

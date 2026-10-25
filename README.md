@@ -12,16 +12,16 @@ security controls, automated validation and cost-conscious operations.
 
 | Area | Status |
 |---|---|
-| Two-VPC, five-subnet foundation | Terraform validation and CIDR checks passed locally; not deployed |
-| Network security groups and gateway endpoints | Terraform validation passed; plan generated; not deployed |
+| Two-VPC, five-subnet foundation | Local Terraform validation and CIDR checks passed; not deployed |
+| Network security groups and gateway endpoints | Terraform validation passed; not deployed |
 | RDS/Aurora and RDS Proxy | Optional Terraform code and static guardrails added; disabled and not deployed |
-| DynamoDB | Optional table, index, app IAM role, sample data and offline tests added; disabled and not deployed |
-| Caching (Valkey and DAX) | Optional Terraform code and offline tests added; disabled and not deployed |
-| Analytics, streaming and DMS | Planned modules; implementation and evidence remain |
+| DynamoDB | Optional table, index, scoped IAM and sample validation; disabled and not deployed |
+| Caching | Optional ElastiCache/Valkey and DAX configuration and local guardrails added; disabled and not deployed |
+| Analytics foundations | Optional S3, Glue, Athena and Redshift configuration and local checks added; disabled and not deployed |
+| Streaming and database migration | Planned; implementation and evidence remain |
 
-A valid Terraform configuration or plan does not prove resources were created
-or that the application works end-to-end. Update status only after reproducible
-testing and evidence exists.
+A valid Terraform configuration or plan does not prove resources were created or
+that services work end-to-end. Keep status aligned with the latest repeatable tests.
 
 ## Locked network address plan
 
@@ -47,14 +47,14 @@ public IPv4 addresses. See [architecture overview](docs/architecture.md),
 2. **Availability and reads** — Multi-AZ and read-replica/reader options.
 3. **Database connections** — RDS Proxy, backups and recovery.
 4. **DynamoDB** — Orders table, composite key, GSI, least-privilege role and sample operations.
-5. **Caching** — ElastiCache and DAX.
-6. **Analytics foundations** — S3 Parquet, Glue, Athena and Redshift.
-7. **Streaming and ingestion** — Kinesis and Firehose.
+5. **Caching** — ElastiCache for Valkey and DynamoDB Accelerator (DAX).
+6. **Analytics foundations** — S3 Parquet data lake, Glue Data Catalog, Athena and optional Redshift.
+7. **Streaming and ingestion** — Kinesis Data Streams and Firehose.
 8. **Database migration** — AWS DMS and migration validation.
 
-Modules 1–5 have optional code or documentation drafted, but their AWS
-resources are not deployed. Modules 6–8 still require implementation, testing
-and evidence. Check each module guide and roadmap before stating its status.
+Modules 1–6 now contain optional configuration and/or local validation assets. All
+AWS service stacks remain disabled by default and have not been deployed. Modules
+7–8 still require implementation, validation and evidence.
 
 ## Local validation
 
@@ -66,21 +66,23 @@ terraform -chdir=infrastructure validate
 python3 scripts/validate-cidrs.py
 python3 tests/validate-relational-config.py
 python3 tests/validate-dynamodb-config.py
-python3 scripts/dynamodb_demo.py validate-sample
 python3 tests/validate-cache-config.py
+python3 tests/validate-analytics-config.py
+python3 scripts/dynamodb_demo.py validate-sample
 python3 scripts/cache_demo.py validate-sample
-python3 scripts/cache_demo.py simulate
+python3 scripts/analytics_demo.py validate-sample
 ```
 
-To generate an AWS plan after checking identity and permissions:
+To generate an AWS plan after reviewing current pricing and confirming the intended
+AWS identity:
 
 ```bash
 AWS_PROFILE=ghost-hunter-cli AWS_REGION=ap-south-1 \
   terraform -chdir=infrastructure plan
 ```
 
-The RDS/Aurora and DynamoDB stacks are disabled by default. Review a fresh plan
-before any apply. No AWS action is taken by the local validators.
+Local validators do not call AWS. Review a fresh plan before any deployment; none
+of the optional analytics, database, cache or Redshift stacks are enabled by default.
 
 ## Security and cost
 

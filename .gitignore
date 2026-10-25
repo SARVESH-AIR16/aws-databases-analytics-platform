@@ -20,3 +20,4 @@ node_modules/
 dist/
 build/
 cdk.out/
+data/analytics/generated/
