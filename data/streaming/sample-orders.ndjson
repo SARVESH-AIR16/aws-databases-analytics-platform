@@ -1,0 +1,4 @@
+{"event_id":"evt-1001","event_type":"ORDER_STATUS_CHANGED","order_id":"ord-1001","customer_id":"cust-2001","status":"PAID","amount":119.45,"currency":"INR","occurred_at":"2026-10-24T09:15:00Z"}
+{"event_id":"evt-1002","event_type":"ORDER_STATUS_CHANGED","order_id":"ord-1002","customer_id":"cust-2002","status":"PENDING","amount":125.00,"currency":"INR","occurred_at":"2026-10-24T09:17:12Z"}
+{"event_id":"evt-1003","event_type":"ORDER_STATUS_CHANGED","order_id":"ord-1003","customer_id":"cust-2003","status":"PAID","amount":74.50,"currency":"INR","occurred_at":"2026-10-24T09:19:45Z"}
+{"event_id":"evt-1004","event_type":"ORDER_STATUS_CHANGED","order_id":"ord-1004","customer_id":"cust-2004","status":"SHIPPED","amount":249.99,"currency":"INR","occurred_at":"2026-10-24T10:02:00Z"}

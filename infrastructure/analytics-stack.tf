@@ -75,6 +75,28 @@ resource "aws_s3_bucket_lifecycle_configuration" "analytics_lake" {
   }
 
   rule {
+    id     = "expire-streaming-data"
+    status = "Enabled"
+    filter {
+      prefix = "data/streaming/"
+    }
+    expiration {
+      days = 7
+    }
+  }
+
+  rule {
+    id     = "expire-streaming-error-data"
+    status = "Enabled"
+    filter {
+      prefix = "data/streaming-errors/"
+    }
+    expiration {
+      days = 7
+    }
+  }
+
+  rule {
     id     = "expire-noncurrent-versions"
     status = "Enabled"
     filter {}

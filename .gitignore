@@ -21,3 +21,4 @@ dist/
 build/
 cdk.out/
 data/analytics/generated/
+data/streaming/generated/

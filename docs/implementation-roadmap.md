@@ -74,7 +74,24 @@ destroy; review the stage guide before an approved deployment.
 
 ## Module 7 — Streaming and ingestion
 
-Implement Kinesis and Firehose with a defined destination and synthetic-record tests.
+The optional streaming module adds:
+
+- A provisioned Kinesis Data Stream with one shard and 24-hour retention by default,
+  plus server-side encryption using the AWS-managed Kinesis KMS key.
+- An optional Firehose consumer that reads the configured stream and delivers
+  GZIP-compressed records to the Module 6 analytics S3 bucket.
+- Bounded S3 buffering, time-partitioned success output, a dedicated delivery-error
+  prefix, and seven-day lifecycle expiry for both streaming prefixes.
+- Firehose role trust restricted by account and delivery-stream ARN, Kinesis read
+  permissions scoped to the stream, constrained KMS decrypt conditions, and S3
+  object access restricted to the two delivery prefixes.
+- A producer-policy JSON output template with scoped KMS data-key generation and local synthetic NDJSON validation.
+
+Both Kinesis and Firehose switches default to false. Firehose requires the Kinesis
+and analytics stacks. The stream's provisioned shard can incur ongoing charges, and
+Firehose charges depend on ingestion; review current regional pricing and a fresh
+Terraform plan before an explicitly approved temporary demo. Local simulation does
+not prove AWS ingestion or delivery.
 
 ## Module 8 — Database migration
 
@@ -95,10 +112,10 @@ Implement an AWS DMS migration test and validate migrated records and cleanup.
 
 - The two-VPC/five-subnet CIDR plan and network-hardening Terraform configuration
   passed local validation; no network resources have been applied.
-- Relational, DynamoDB and caching configurations are optional and disabled by
-  default. Their reported local static guardrails and sample checks have passed.
-- Module 6 analytics configuration and checks have been added locally; validation
-  on this checkout is pending. All analytics resources remain disabled by default.
+- Relational, DynamoDB, caching, and analytics configurations are optional and
+  disabled by default; reported local validation/static checks passed.
+- Module 7 streaming configuration and local checks have been added on this
+  checkout; run the validation commands before staging or committing it.
 - No AWS resources have been deployed by this project based on the reported runs.
 
 ## Portfolio deliverables
