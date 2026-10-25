@@ -16,7 +16,8 @@ security controls, automated validation and cost-conscious operations.
 | Network security groups and gateway endpoints | Terraform validation passed; plan generated; not deployed |
 | RDS/Aurora and RDS Proxy | Optional Terraform code and static guardrails added; disabled and not deployed |
 | DynamoDB | Optional table, index, app IAM role, sample data and offline tests added; disabled and not deployed |
-| Caching, analytics, streaming and DMS | Planned modules; implementation and evidence remain |
+| Caching (Valkey and DAX) | Optional Terraform code and offline tests added; disabled and not deployed |
+| Analytics, streaming and DMS | Planned modules; implementation and evidence remain |
 
 A valid Terraform configuration or plan does not prove resources were created
 or that the application works end-to-end. Update status only after reproducible
@@ -51,8 +52,8 @@ public IPv4 addresses. See [architecture overview](docs/architecture.md),
 7. **Streaming and ingestion** — Kinesis and Firehose.
 8. **Database migration** — AWS DMS and migration validation.
 
-Modules 1–4 have optional code or documentation drafted, but their AWS
-resources are not deployed. Modules 5–8 still require implementation, testing
+Modules 1–5 have optional code or documentation drafted, but their AWS
+resources are not deployed. Modules 6–8 still require implementation, testing
 and evidence. Check each module guide and roadmap before stating its status.
 
 ## Local validation
@@ -66,6 +67,9 @@ python3 scripts/validate-cidrs.py
 python3 tests/validate-relational-config.py
 python3 tests/validate-dynamodb-config.py
 python3 scripts/dynamodb_demo.py validate-sample
+python3 tests/validate-cache-config.py
+python3 scripts/cache_demo.py validate-sample
+python3 scripts/cache_demo.py simulate
 ```
 
 To generate an AWS plan after checking identity and permissions:

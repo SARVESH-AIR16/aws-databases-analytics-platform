@@ -53,7 +53,7 @@ by default. Live table operations are pending a reviewed deployment.
 
 ## Module 5 — Caching
 
-Implement ElastiCache and DAX as appropriate; measure hits, misses and latency.
+Optional Valkey and DAX Terraform configuration, encryption and local static/offline checks are added. Both stacks are disabled and not deployed. Live integration, latency testing and current regional pricing review remain pending.
 
 ## Module 6 — Analytics foundations
 
@@ -81,12 +81,13 @@ Implement an AWS DMS migration test and validate migrated records and cleanup.
 ## Verified status at this stage
 
 - The two-VPC/five-subnet configuration and CIDR validator passed locally.
-- Network-hardening Terraform validation passed and a plan proposed 45 additions,
-  zero changes and zero deletions; not applied.
+- The pre-Module-5 network-hardening plan proposed 45 additions, zero changes and
+  zero deletions; not applied. Module 5 removes two plaintext DAX security-group rules,
+  so regenerate a fresh plan before any deployment.
 - Relational configuration guardrails passed; RDS/Aurora/Proxy are disabled and
   no database services were in the plan.
-- DynamoDB configuration is drafted in the current local module patch and remains
-  disabled by default; offline tests must pass before committing.
+- DynamoDB optional configuration and offline checks passed before the last commit; stack disabled by default.
+- Caching optional configuration has been added locally by the Module 5 installer; validate and test before committing.
 - No AWS resources have been deployed by this project based on the reported runs.
 
 ## Portfolio deliverables

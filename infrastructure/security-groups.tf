@@ -125,15 +125,6 @@ resource "aws_vpc_security_group_ingress_rule" "cache_from_application" {
   description                  = "Redis-compatible cache traffic from the application tier"
 }
 
-resource "aws_vpc_security_group_ingress_rule" "dax_plain_from_application" {
-  security_group_id            = aws_security_group.dax.id
-  referenced_security_group_id = aws_security_group.application.id
-  from_port                    = 8111
-  to_port                      = 8111
-  ip_protocol                  = "tcp"
-  description                  = "DAX client port from the application tier"
-}
-
 resource "aws_vpc_security_group_ingress_rule" "dax_tls_from_application" {
   security_group_id            = aws_security_group.dax.id
   referenced_security_group_id = aws_security_group.application.id
@@ -168,15 +159,6 @@ resource "aws_vpc_security_group_egress_rule" "application_to_cache" {
   to_port                      = 6379
   ip_protocol                  = "tcp"
   description                  = "Application requests to cache"
-}
-
-resource "aws_vpc_security_group_egress_rule" "application_to_dax_plain" {
-  security_group_id            = aws_security_group.application.id
-  referenced_security_group_id = aws_security_group.dax.id
-  from_port                    = 8111
-  to_port                      = 8111
-  ip_protocol                  = "tcp"
-  description                  = "Application requests to DAX client port"
 }
 
 resource "aws_vpc_security_group_egress_rule" "application_to_dax_tls" {
