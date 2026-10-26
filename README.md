@@ -115,3 +115,7 @@ The finished project should include reproducible infrastructure and tests,
 synthetic data, architecture evidence, module documentation, a cost/security/
 cleanup guide and genuine screenshots or demo results. Claims must match what
 was actually deployed and tested.
+
+## EC2 host layer
+
+The optional compute host layer adds the administration bastion, private application host, and optional private analytics worker. They remain disabled by default until a deployment plan and cost review are approved. See `modules/09-compute-hosts/README.md`.

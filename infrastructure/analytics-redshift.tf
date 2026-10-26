@@ -154,6 +154,7 @@ resource "aws_redshift_cluster" "analytics" {
   master_username                     = "awsuser"
   manage_master_password              = true
   node_type                           = var.redshift_node_type
+  maintenance_track_name              = "current"
   cluster_type                        = "single-node"
   number_of_nodes                     = 1
   cluster_subnet_group_name           = aws_redshift_subnet_group.analytics[0].name

@@ -126,3 +126,7 @@ any temporary deployment. The offline demo does not prove a live migration.
 Root README, module guides, architecture diagram, Terraform code, local and live
 validation evidence, synthetic data, cost/security/cleanup documentation and real
 screenshots or demo results.
+
+## Compute hosts and regional service availability
+
+The EC2 host layer is now defined locally but remains opt-in. Redshift defaults to the Mumbai-supported `rg.large` single-node type on the current track. Neither change deploys resources; verify costs and region/track availability before apply.

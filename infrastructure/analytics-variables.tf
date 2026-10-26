@@ -40,10 +40,10 @@ variable "athena_bytes_scanned_cutoff_bytes" {
 variable "redshift_node_type" {
   description = "Node type for the optional single-node Redshift demo cluster. Confirm current ap-south-1 availability and pricing before enabling."
   type        = string
-  default     = "ra3.large"
+  default     = "rg.large"
 
   validation {
-    condition     = contains(["ra3.large", "ra3.xlplus"], var.redshift_node_type)
-    error_message = "redshift_node_type must be ra3.large or ra3.xlplus."
+    condition     = contains(["rg.large", "rg.xlarge"], var.redshift_node_type)
+    error_message = "redshift_node_type must be rg.large or rg.xlarge. rg.large single-node requires the current P204-or-later maintenance track."
   }
 }

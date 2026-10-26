@@ -55,3 +55,7 @@ crawl/query workflow.
 Terraform configuration, local static checks, synthetic-data validation and SQL
 examples are authored locally. Validation must be run on the repository after
 installation. All cloud resources remain undeployed and disabled by default.
+
+## Regional note — Redshift
+
+The provisioned Redshift demo defaults to `rg.large` on the current maintenance track for Mumbai availability. Confirm current `ap-south-1` hourly pricing, account quota, and current-track/P204 availability before enabling; it is an hourly-billed resource.
