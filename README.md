@@ -10,19 +10,25 @@ security controls, automated validation and cost-conscious operations.
 
 ## Current implementation status
 
-| Area | Status |
-|---|---|
-| Two-VPC, five-subnet foundation | Local Terraform validation and CIDR checks passed; not deployed |
-| Network security groups and gateway endpoints | Terraform validation passed; not deployed |
-| RDS/Aurora and RDS Proxy | Optional Terraform code and static guardrails added; disabled and not deployed |
-| DynamoDB | Optional table, index, scoped IAM and sample validation; disabled and not deployed |
-| Caching | Optional ElastiCache/Valkey and DAX configuration and local guardrails added; disabled and not deployed |
-| Analytics foundations | Optional S3, Glue, Athena and Redshift configuration and local checks added; disabled and not deployed |
-| Streaming and ingestion | Optional Kinesis and Firehose configuration and local checks added; disabled and not deployed |
-| Database migration | Optional DMS full-load to S3 Parquet with scoped IAM and local checks; disabled and not deployed |
+The temporary demo was deployed, verified and then destroyed. These statuses
+describe that historical demo, not resources currently running in AWS.
 
-A valid Terraform configuration or plan does not prove resources were created or
-that services work end-to-end. Keep status aligned with the latest repeatable tests.
+| Area | Repository/default state | Temporary demo result |
+|---|---|---|
+| Network foundation | Terraform design for two VPCs and five subnets | Both VPCs were deployed, and VPC peering was active before cleanup. |
+| Security groups and VPC endpoints | Defined in Terraform | Project resources were included in the successful teardown. |
+| EC2 compute | Optional host configuration | The analytics worker was verified running as `t3.micro` before cleanup. |
+| RDS PostgreSQL | Optional stack, disabled by default | `db-analytics-postgres` was available, `db.t4g.micro`, 20 GB storage, private, with one-day backup retention. |
+| DynamoDB | Optional orders table | `db-analytics-orders` was `ACTIVE` before cleanup. |
+| ElastiCache Valkey | Optional cache stack | The Valkey replication group was available before cleanup. DAX was not deployed. |
+| S3 and Glue Data Catalog | Optional analytics configuration | S3 default encryption was AES256; Glue database `dba_analytics_lake` existed before cleanup. |
+| Other optional services | Configuration and local validation only | Aurora, RDS Proxy, read replica, DAX, Athena workgroup/crawler, Redshift, Kinesis, Firehose and DMS were not deployed as live services in this demo. |
+
+The Terraform destroy completed with 73 resources destroyed. Subsequent read-only
+checks confirmed the project database, Valkey replication group, DynamoDB table,
+S3 lake bucket, Glue database, both VPCs and analytics worker were no longer
+found. These checks do not prove that the AWS bill is zero; review billing for
+delayed charges.
 
 ## Locked network address plan
 
@@ -53,9 +59,11 @@ public IPv4 addresses. See [architecture overview](docs/architecture.md),
 7. **Streaming and ingestion** — Kinesis Data Streams and Firehose delivery to the analytics S3 lake.
 8. **Database migration** — AWS DMS full-load from private PostgreSQL to an S3 Parquet target, with migration validation.
 
-All eight modules now have optional configuration and/or local validation assets. All
-AWS service stacks remain disabled by default and have not been deployed. The local
-DMS demo does not prove an AWS migration occurred.
+These modules describe the repository's configurable infrastructure and local
+validation. They do not imply all services were deployed. Only the services
+identified in the temporary-demo status table above were verified live. All
+optional AWS service stacks remain disabled by default. Local DMS validation or
+simulation does not mean an AWS migration occurred.
 
 ## Local validation
 
@@ -80,16 +88,13 @@ python3 scripts/dms_demo.py validate-sample
 python3 scripts/dms_demo.py simulate
 ```
 
-To generate an AWS plan after reviewing current pricing and confirming the intended
-AWS identity:
-
-```bash
-AWS_PROFILE=ghost-hunter-cli AWS_REGION=ap-south-1 \
-  terraform -chdir=infrastructure plan
-```
-
-Local validators do not call AWS. Review a fresh plan before any deployment; none
-of the optional analytics, database, cache, streaming, DMS or Redshift stacks are enabled by default.
+To create a plan for a future deployment, first configure and verify a
+dedicated non-root AWS identity with the permissions required for the services
+you explicitly choose to enable. The temporary demo deployment profile has
+been removed. Do not assume the existing `ghost-hunter` or `ghost-hunter-cli`
+profiles have permissions for this project. Review current AWS pricing and a
+fresh Terraform plan before any approved deployment; do not run `apply` without
+a separate resource and cost review.
 
 ## Security and cost
 
@@ -111,10 +116,11 @@ of the optional analytics, database, cache, streaming, DMS or Redshift stacks ar
 
 ## Portfolio evidence
 
-The finished project should include reproducible infrastructure and tests,
-synthetic data, architecture evidence, module documentation, a cost/security/
-cleanup guide and genuine screenshots or demo results. Claims must match what
-was actually deployed and tested.
+The report `docs/evidence/live-demo-verification-2026-10-27.md` records the
+temporary demo and cleanup. Six screenshots captured before teardown are in
+`docs/screenshots/`. They are historical snapshots; they do not mean that AWS
+resources are still running. Portfolio claims must distinguish verified live
+services from optional modules that were only configured or locally validated.
 
 ## EC2 host layer
 

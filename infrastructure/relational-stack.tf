@@ -1,7 +1,10 @@
 locals {
   relational_stack_enabled = var.enable_rds_stack || var.enable_aurora_stack
 
-  rds_proxy_secret_arn = var.rds_manage_master_user_password ? try(aws_db_instance.primary[0].master_user_secret[0].secret_arn, null) : try(aws_secretsmanager_secret_version.rds_proxy_credentials[0].arn, null)
+  rds_primary_identifier = var.rds_manage_master_user_password ? try(aws_db_instance.primary[0].identifier, null) : try(aws_db_instance.primary_manual[0].identifier, null)
+  rds_primary_arn        = var.rds_manage_master_user_password ? try(aws_db_instance.primary[0].arn, null) : try(aws_db_instance.primary_manual[0].arn, null)
+  rds_primary_address    = var.rds_manage_master_user_password ? try(aws_db_instance.primary[0].address, null) : try(aws_db_instance.primary_manual[0].address, null)
+  rds_proxy_secret_arn   = var.rds_manage_master_user_password ? try(aws_db_instance.primary[0].master_user_secret[0].secret_arn, null) : try(aws_secretsmanager_secret_version.rds_proxy_credentials[0].arn, null)
 }
 
 resource "aws_db_subnet_group" "relational" {
@@ -17,7 +20,7 @@ resource "aws_db_subnet_group" "relational" {
 }
 
 resource "aws_db_instance" "primary" {
-  count = var.enable_rds_stack ? 1 : 0
+  count = var.enable_rds_stack && var.rds_manage_master_user_password ? 1 : 0
 
   identifier                  = var.rds_instance_identifier
   engine                      = "postgres"
@@ -25,13 +28,11 @@ resource "aws_db_instance" "primary" {
   instance_class              = var.rds_instance_class
   db_name                     = var.rds_db_name
   username                    = var.rds_master_username
-  manage_master_user_password = var.rds_manage_master_user_password
-  password                    = var.rds_manage_master_user_password ? null : var.rds_master_password
-
-  allocated_storage     = 20
-  max_allocated_storage = 100
-  storage_type          = "gp3"
-  storage_encrypted     = true
+  manage_master_user_password = true
+  allocated_storage           = 20
+  max_allocated_storage       = 100
+  storage_type                = "gp3"
+  storage_encrypted           = true
 
   db_subnet_group_name   = aws_db_subnet_group.relational[0].name
   vpc_security_group_ids = [aws_security_group.database.id]
@@ -64,11 +65,58 @@ resource "aws_db_instance" "primary" {
   }
 }
 
+resource "aws_db_instance" "primary_manual" {
+  count = var.enable_rds_stack && !var.rds_manage_master_user_password ? 1 : 0
+
+  identifier     = var.rds_instance_identifier
+  engine         = "postgres"
+  port           = 5432
+  instance_class = var.rds_instance_class
+  db_name        = var.rds_db_name
+  username       = var.rds_master_username
+  password       = var.rds_master_password
+
+  allocated_storage     = 20
+  max_allocated_storage = 100
+  storage_type          = "gp3"
+  storage_encrypted     = true
+
+  db_subnet_group_name   = aws_db_subnet_group.relational[0].name
+  vpc_security_group_ids = [aws_security_group.database.id]
+  publicly_accessible    = false
+  multi_az               = var.rds_multi_az
+
+  backup_retention_period      = 1
+  backup_window                = "17:00-18:00"
+  maintenance_window           = "sun:18:00-sun:19:00"
+  auto_minor_version_upgrade   = true
+  copy_tags_to_snapshot        = true
+  deletion_protection          = false
+  skip_final_snapshot          = true
+  performance_insights_enabled = false
+
+  tags = {
+    Name = var.rds_instance_identifier
+  }
+
+  lifecycle {
+    precondition {
+      condition     = length(var.rds_master_password) >= 16
+      error_message = "When using explicit credentials, set TF_VAR_rds_master_password to a strong password of at least 16 characters. Keep Terraform state private."
+    }
+
+    precondition {
+      condition     = !(var.enable_rds_read_replica && var.rds_manage_master_user_password)
+      error_message = "AWS RDS-managed master passwords are incompatible with creating an RDS PostgreSQL read replica. Set rds_manage_master_user_password=false and provide rds_master_password when enabling the read replica."
+    }
+  }
+}
+
 resource "aws_db_instance" "read_replica" {
   count = var.enable_rds_stack && var.enable_rds_read_replica ? 1 : 0
 
   identifier                 = "${var.rds_instance_identifier}-read"
-  replicate_source_db        = aws_db_instance.primary[0].identifier
+  replicate_source_db        = local.rds_primary_arn
   instance_class             = var.rds_instance_class
   publicly_accessible        = false
   db_subnet_group_name       = aws_db_subnet_group.relational[0].name
@@ -106,7 +154,7 @@ resource "aws_secretsmanager_secret_version" "rds_proxy_credentials" {
     username = var.rds_master_username
     password = var.rds_master_password
     engine   = "postgres"
-    host     = aws_db_instance.primary[0].address
+    host     = local.rds_primary_address
     port     = 5432
     dbname   = var.rds_db_name
   })
@@ -186,7 +234,7 @@ resource "aws_db_proxy_target" "rds_writer" {
 
   db_proxy_name          = aws_db_proxy.rds[0].name
   target_group_name      = aws_db_proxy_default_target_group.rds[0].name
-  db_instance_identifier = aws_db_instance.primary[0].identifier
+  db_instance_identifier = local.rds_primary_identifier
 }
 
 resource "aws_vpc_security_group_ingress_rule" "database_from_application_direct" {

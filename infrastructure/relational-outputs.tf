@@ -1,6 +1,6 @@
 output "rds_primary_endpoint" {
   description = "Private DNS endpoint for the optional RDS PostgreSQL primary; null when disabled."
-  value       = try(aws_db_instance.primary[0].address, null)
+  value       = local.rds_primary_address
 }
 
 output "rds_read_replica_endpoint" {

@@ -167,7 +167,7 @@ resource "aws_glue_catalog_database" "analytics" {
 }
 
 resource "aws_athena_workgroup" "analytics" {
-  count = var.enable_analytics_stack ? 1 : 0
+  count = (var.enable_analytics_stack && var.enable_athena_workgroup) ? 1 : 0
 
   name        = "db-analytics-wg"
   description = "Cost-controlled workgroup for the portfolio data lake"

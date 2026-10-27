@@ -5,7 +5,7 @@ resource "aws_dms_endpoint" "postgres_source" {
   endpoint_type = "source"
   engine_name   = "postgres"
   database_name = var.rds_db_name
-  server_name   = aws_db_instance.primary[0].address
+  server_name   = local.rds_primary_address
   port          = 5432
   username      = var.rds_master_username
   password      = var.rds_master_password

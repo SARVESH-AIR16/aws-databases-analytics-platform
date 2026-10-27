@@ -4,6 +4,12 @@ variable "enable_analytics_stack" {
   default     = false
 }
 
+variable "enable_athena_workgroup" {
+  description = "Create the optional Athena workgroup when enabled for the selected account plan."
+  type        = bool
+  default     = true
+}
+
 variable "enable_glue_crawler" {
   description = "Create an optional on-demand Glue crawler for Parquet objects in the data lake."
   type        = bool

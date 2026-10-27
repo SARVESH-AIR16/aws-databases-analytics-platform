@@ -61,5 +61,5 @@ need('data_format             = "parquet"' in endpoints and 'encryption_mode    
 need('"schema-name" = "public"' in task and '"table-name"  = "orders"' in task and 'migration_type           = "full-load"' in task, "Task is a full-load migration scoped to public.orders")
 need('start_replication_task = var.enable_dms_task_start' in task, "Task start is explicitly gated by its opt-in variable")
 need('id     = "expire-dms-migration-data"' in analytics and 'prefix = "data/dms-migration/"' in analytics, "DMS output has an S3 lifecycle expiry rule")
-need('resource "aws_db_instance" "primary"' in relational and 'count = var.enable_rds_stack ? 1 : 0' in relational, "DMS source is wired to the existing optional RDS PostgreSQL instance")
+need('resource "aws_db_instance" "primary_manual"' in relational and 'local.rds_primary_address' in endpoints, "DMS source is wired to the explicit-credential RDS PostgreSQL instance")
 print("PASS: DMS static guardrails passed.")

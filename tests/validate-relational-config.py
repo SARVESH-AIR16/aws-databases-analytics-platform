@@ -13,6 +13,11 @@ checks = {
     "RDS primary is private": "publicly_accessible    = false" in stack,
     "RDS storage encryption enabled": "storage_encrypted     = true" in stack,
     "RDS-managed password/read-replica guardrail": "!(var.enable_rds_read_replica && var.rds_manage_master_user_password)" in stack,
+    "Managed and explicit RDS passwords use separate non-conflicting resources": (
+        'resource "aws_db_instance" "primary_manual"' in stack
+        and 'manage_master_user_password = true' in stack
+        and any(line.split() == ["password", "=", "var.rds_master_password"] for line in stack.splitlines())
+    ),
     "RDS Proxy requires TLS": "require_tls            = true" in stack,
     "Private subnet group uses two AZ subnet resources": "aws_subnet.application_private.id, aws_subnet.application_private_b.id" in stack,
 }
